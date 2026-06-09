@@ -124,7 +124,7 @@ body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: grab;
   transform: translate(-50%, -50%);
-  transition: box-shadow 0.13s, left 0.35s cubic-bezier(.4,0,.2,1), top 0.35s cubic-bezier(.4,0,.2,1);
+  transition: box-shadow 0.13s, left var(--token-speed, 3s) cubic-bezier(.4,0,.2,1), top var(--token-speed, 3s) cubic-bezier(.4,0,.2,1);
   z-index: 10;
   border: 3px solid rgba(255,255,255,0.25);
 }
@@ -149,144 +149,24 @@ body {
 .ball-token:active { cursor: grabbing; }
 .ball-token.dragging { z-index: 100; }
 
-/* ── BOTTOM SHEET ── */
-#sheet-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 40;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-}
-#sheet-backdrop.visible { opacity: 1; pointer-events: all; }
-
-#bottom-sheet {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: #161b22;
-  border-top: 1px solid #30363d;
-  border-radius: 18px 18px 0 0;
-  z-index: 50;
-  transform: translateY(100%);
-  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
-  max-width: 480px;
-  margin: 0 auto;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
-}
-#bottom-sheet.open { transform: translateY(0); }
-
-#sheet-handle-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px 6px;
-  cursor: pointer;
-}
-#sheet-handle {
-  width: 36px; height: 4px;
-  background: #30363d;
-  border-radius: 2px;
-}
-
-#sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 8px;
-}
-#sheet-header-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #cdd9e5;
-}
-#sheet-close {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: #21262d;
-  border: none;
-  color: #7d8590;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* rot tabs */
-.rot-tabs {
-  display: flex;
-  border-top: 1px solid #21262d;
-  border-bottom: 1px solid #21262d;
-}
-.rot-tab {
-  flex: 1; padding: 8px 4px;
-  text-align: center;
-  font-size: 12px; font-weight: 700;
-  color: #7d8590;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  border-top: none; border-left: none; border-right: none;
-  transition: all 0.13s;
-}
-.rot-tab:active { background: #1c2128; }
-.rot-tab.active { color: #e94560; border-bottom-color: #e94560; background: #1c2128; }
-
-/* sheet body */
-#sheet-body {
-  display: flex;
-  gap: 12px;
-  padding: 12px 16px;
-  align-items: flex-start;
-}
-
-/* mini court in sheet */
-#mini-court-wrap {
-  position: relative;
-  flex-shrink: 0;
-  width: 130px;
-  height: 100px;
-}
-#mini-canvas { border-radius: 6px; display: block; }
-
-.mini-token {
+/* ── BOTTOM TRIGGER BAR ── */
+.zone-label {
   position: absolute;
   width: 22px; height: 22px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 7px; font-weight: 700;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.5);
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  transform: translate(-50%, -50%);
-  border: 1.5px solid rgba(255,255,255,0.2);
-  pointer-events: none;
-}
-
-#sheet-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-#rot-desc {
   font-size: 10px;
-  color: #8b949e;
-  line-height: 1.5;
-}
-#rot-desc strong { color: #cdd9e5; }
-
-.rot-apply-btn {
-  width: 100%;
-  padding: 9px;
-  border-radius: 9px;
-  border: none;
-  background: #e94560;
-  color: #fff;
-  font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: background 0.13s;
+  display: flex; align-items: center; justify-content: center;
+  transform: translate(-50%, -160%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 20;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
-.rot-apply-btn:active { background: #c73350; }
 
 /* ── BOTTOM TRIGGER BAR ── */
 #rot-trigger {
@@ -351,6 +231,41 @@ body {
   transition: transform 0.3s;
 }
 #trigger-arrow.up { transform: rotate(180deg); }
+
+#speed-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.speed-btn {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #7d8590;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.speed-btn:active { background: #21262d; }
+.speed-btn.active { background: #21262d; border-color: #e94560; color: #e94560; }
+
+#save-btn {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #7d8590;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.13s;
+  display: flex; align-items: center;
+}
+#save-btn:active { background: #21262d; color: #cdd9e5; }
+#save-btn.saved { border-color: #00e676; color: #00e676; }
 </style>
 </head>
 <body>
@@ -418,7 +333,7 @@ body {
 </div>
 
 <!-- BOTTOM TRIGGER BAR -->
-<div id="rot-trigger" onclick="openSheet()">
+<div id="rot-trigger">
   <div id="trigger-left">
     <div>
       <div id="trigger-rot-label">Rotação</div>
@@ -435,39 +350,15 @@ body {
       <div class="trigger-pill" data-rot="6" onclick="quickRot(event,6)">P6</div>
     </div>
     <div id="trigger-arrow">⌃</div>
-  </div>
-</div>
-
-<!-- SHEET BACKDROP -->
-<div id="sheet-backdrop" onclick="closeSheet()"></div>
-
-<!-- BOTTOM SHEET -->
-<div id="bottom-sheet">
-  <div id="sheet-handle-row" onclick="closeSheet()">
-    <div id="sheet-handle"></div>
-  </div>
-  <div id="sheet-header">
-    <div id="sheet-header-title">Rotações Sideout — 5-1</div>
-    <button id="sheet-close" onclick="closeSheet()">✕</button>
-  </div>
-  <div class="rot-tabs" id="rot-tabs">
-    <button class="rot-tab active" data-rot="1" onclick="selectRotation(1)">P1</button>
-    <button class="rot-tab" data-rot="2" onclick="selectRotation(2)">P2</button>
-    <button class="rot-tab" data-rot="3" onclick="selectRotation(3)">P3</button>
-    <button class="rot-tab" data-rot="4" onclick="selectRotation(4)">P4</button>
-    <button class="rot-tab" data-rot="5" onclick="selectRotation(5)">P5</button>
-    <button class="rot-tab" data-rot="6" onclick="selectRotation(6)">P6</button>
-  </div>
-  <div id="sheet-body">
-    <div id="mini-court-wrap">
-      <canvas id="mini-canvas" width="130" height="100"></canvas>
-    </div>
-    <div id="sheet-right">
-      <div id="rot-desc"></div>
-      <button class="rot-apply-btn" onclick="applyRotation()">↳ Aplicar na prancheta</button>
+    <div id="speed-btns">
+      <button class="speed-btn active" data-speed="3" onclick="setSpeed(this)">1×</button>
+      <button class="speed-btn" data-speed="2.5" onclick="setSpeed(this)">2×</button>
+      <button class="speed-btn" data-speed="1.5" onclick="setSpeed(this)">3×</button>
     </div>
   </div>
 </div>
+
+
 
 <script>
 // ─── Canvas sizing (responsive) ──────────────────────────────
@@ -567,48 +458,54 @@ function coords() {
 }
 
 // ─── Rotation data ────────────────────────────────────────────
-// Rule diagram: each rotation shows a small SVG of the rotational order
-// numbers in the image: P1=6→1, P2=1→2(Le goes from 1 to 6 area), etc.
-// Format per rotation: { le, c, op, po1, po2, lb } all {x,y} normalized
-// rule: { zones: [top-right label, arrow direction indicators] }
+// rot: posições rotacionais fixas (regra de rotação, zonas 1-6)
+// pos: posições táticas de sideout (após movimentação)
+// Zonas: 1=fundo-dir, 2=fundo-centro, 3=fundo-esq, 4=frente-esq, 5=frente-centro, 6=frente-dir
+
+function zonePos(zone, c) {
+  const map = {
+    1:{x:c.XR, y:c.YB1}, 2:{x:c.XC, y:c.YB1}, 3:{x:c.XL, y:c.YB1},
+    4:{x:c.XL, y:c.YF2}, 5:{x:c.XC, y:c.YF2}, 6:{x:c.XR, y:c.YF2},
+  };
+  return map[zone];
+}
 
 const rotDefs = [
-  // P1 (img1): OP frente-esq, C frente centro-esq | P2 esq, LIB centro, P1 dir, LEV fundo-dir
+  // P1: Le na zona 1
   { title:'P1 — Le fundo direito',
     note:'<strong>Le</strong> fundo dir (pos.1). <strong>C</strong> frente centro-esq, <strong>Op</strong> frente esq. Recepção: <strong>Po2</strong> esq · <strong>Lib</strong> centro · <strong>Po1</strong> dir.',
-    rule:'Le está em 1. Ordem: Op(4)→C(3)→Le(2)→1',
-    ruleZones: [{n:'6',x:8,y:12,hi:false},{n:'1',x:38,y:12,hi:true},{n:'5',x:3,y:38,hi:false},{n:'↓',x:26,y:38,isArrow:true},{n:'2',x:44,y:52,hi:false},{n:'4',x:3,y:58,hi:false},{n:'3',x:26,y:62,hi:false}],
-    pos: c => ({ le:{x:c.XR,y:c.YB1}, c:{x:c.XCL,y:c.YF2}, op:{x:c.XL,y:c.YF1}, po1:{x:c.XCR,y:c.YM}, po2:{x:c.XL,y:c.YM}, lb:{x:c.XC,y:c.YM} })
+    rot: c => ({ le:zonePos(1,c), op:zonePos(4,c), c:zonePos(3,c), po1:zonePos(2,c), po2:zonePos(5,c), lb:zonePos(2,c) }),
+    pos: c => ({ le:{x:0.7997,y:0.9078}, c:{x:0.2059,y:0.6078}, op:{x:0.1369,y:0.5444}, po1:{x:0.7541,y:0.7859}, po2:{x:0.2036,y:0.8163}, lb:{x:0.49,y:0.8772} })
   },
-  // P2 (img6): M1 frente-esq, LEV frente-dir | P1 esq, P2 centro, LIB dir, OP fundo-centro
+  // P2: Le na zona 6
   { title:'P2 — Le frente direito',
     note:'<strong>Le</strong> frente dir (pos.6). <strong>C</strong> frente esq, <strong>Op</strong> fundo centro. Recepção: <strong>Po1</strong> esq · <strong>Po2</strong> centro · <strong>Lib</strong> dir.',
-    ruleZones: [{n:'1',x:8,y:12,hi:false},{n:'2',x:38,y:12,hi:false},{n:'6',x:3,y:38,hi:true},{n:'↓',x:26,y:38,isArrow:true},{n:'3',x:44,y:52,hi:false},{n:'5',x:3,y:58,hi:false},{n:'4',x:26,y:62,hi:false}],
-    pos: c => ({ le:{x:c.XR,y:c.YF1}, c:{x:c.XL,y:c.YF1}, op:{x:c.XC,y:c.YB2}, po1:{x:c.XL,y:c.YM}, po2:{x:c.XC,y:c.YM}, lb:{x:c.XCR,y:c.YM} })
+    rot: c => ({ le:zonePos(6,c), op:zonePos(3,c), c:zonePos(4,c), po1:zonePos(5,c), po2:zonePos(2,c), lb:zonePos(1,c) }),
+    pos: c => ({ le:{x:0.8664,y:0.5596}, c:{x:0.1169,y:0.6248}, op:{x:0.3133,y:0.9378}, po1:{x:0.2269,y:0.8054}, po2:{x:0.5133,y:0.8576}, lb:{x:0.7875,y:0.8359} })
   },
-  // P3 (img5): LEV frente-centro, M2 frente-dir | P1 esq, LIB centro, P2 dir, OP fundo-centro
+  // P3: Le na zona 5
   { title:'P3 — Le frente centro',
     note:'<strong>Le</strong> frente centro (pos.5). <strong>C</strong> frente dir, <strong>Op</strong> fundo centro. Recepção: <strong>Po1</strong> esq · <strong>Lib</strong> centro · <strong>Po2</strong> dir.',
-    ruleZones: [{n:'2',x:8,y:12,hi:false},{n:'3',x:38,y:12,hi:false},{n:'1',x:3,y:38,hi:false},{n:'↓',x:26,y:38,isArrow:true},{n:'4',x:44,y:52,hi:false},{n:'6',x:3,y:58,hi:false},{n:'5',x:26,y:62,hi:true}],
-    pos: c => ({ le:{x:c.XC,y:c.YF1}, c:{x:c.XR,y:c.YF1}, op:{x:c.XC,y:c.YB2}, po1:{x:c.XL,y:c.YM}, po2:{x:c.XCR,y:c.YM}, lb:{x:c.XC,y:c.YM} })
+    rot: c => ({ le:zonePos(5,c), op:zonePos(2,c), c:zonePos(6,c), po1:zonePos(4,c), po2:zonePos(1,c), lb:zonePos(3,c) }),
+    pos: c => ({ le:{x:0.6533,y:0.553}, c:{x:0.9064,y:0.6226}, op:{x:0.6533,y:0.9443}, po1:{x:0.1936,y:0.8402}, po2:{x:0.7675,y:0.812}, lb:{x:0.4867,y:0.8402} })
   },
-  // P4 (img4): LEV frente-esq, M2 linha-esq | P2 esq, P1 centro, LIB dir, OP fundo-dir
+  // P4: Le na zona 4
   { title:'P4 — Le frente esquerdo',
     note:'<strong>Le</strong> frente esq (pos.4). <strong>C</strong> linha esq, <strong>Op</strong> fundo dir. Recepção: <strong>Po2</strong> esq · <strong>Po1</strong> centro · <strong>Lib</strong> dir.',
-    ruleZones: [{n:'3',x:8,y:12,hi:false},{n:'4',x:38,y:12,hi:false},{n:'2',x:3,y:38,hi:false},{n:'↓',x:26,y:38,isArrow:true},{n:'5',x:44,y:52,hi:false},{n:'1',x:3,y:58,hi:false},{n:'6',x:26,y:62,hi:false}],
-    pos: c => ({ le:{x:c.XL,y:c.YF1}, c:{x:c.XL,y:c.YF2}, op:{x:c.XR,y:c.YB2}, po1:{x:c.XC,y:c.YM}, po2:{x:c.XL,y:c.YM}, lb:{x:c.XCR,y:c.YM} })
+    rot: c => ({ le:zonePos(4,c), op:zonePos(1,c), c:zonePos(5,c), po1:zonePos(3,c), po2:zonePos(6,c), lb:zonePos(2,c) }),
+    pos: c => ({ le:{x:0.1103,y:0.5465}, c:{x:0.2203,y:0.623}, op:{x:0.8897,y:0.9378}, po1:{x:0.5,y:0.8707}, po2:{x:0.2136,y:0.7946}, lb:{x:0.7708,y:0.8641} })
   },
-  // P5 (img3): M2 frente-esq, LEV frente centro-esq, OP frente-dir | P2 esq, P1 centro, LIB dir
+  // P5: Le na zona 3
   { title:'P5 — Le fundo esquerdo',
     note:'<strong>Le</strong> fundo esq (pos.3). <strong>C</strong> frente esq, <strong>Op</strong> frente dir. Recepção: <strong>Po2</strong> esq · <strong>Po1</strong> centro · <strong>Lib</strong> dir.',
-    ruleZones: [{n:'4',x:8,y:12,hi:false},{n:'5',x:38,y:12,hi:false},{n:'3',x:3,y:38,hi:true},{n:'↓',x:26,y:38,isArrow:true},{n:'6',x:44,y:52,hi:false},{n:'2',x:3,y:58,hi:false},{n:'1',x:26,y:62,hi:false}],
-    pos: c => ({ le:{x:c.XCL,y:c.YF2}, c:{x:c.XL,y:c.YF1}, op:{x:c.XR,y:c.YF1}, po1:{x:c.XC,y:c.YB1}, po2:{x:c.XL,y:c.YB1}, lb:{x:c.XCR,y:c.YB1} })
+    rot: c => ({ le:zonePos(3,c), op:zonePos(6,c), c:zonePos(4,c), po1:zonePos(2,c), po2:zonePos(5,c), lb:zonePos(1,c) }),
+    pos: c => ({ le:{x:0.3359,y:0.6404}, c:{x:0.1169,y:0.5704}, op:{x:0.8831,y:0.5748}, po1:{x:0.51,y:0.8687}, po2:{x:0.2069,y:0.847}, lb:{x:0.7941,y:0.8513} })
   },
-  // P6 (img2): OP+LEV frente-dir (agrupados), M1 frente-dir | P2 esq, LIB centro, P1 dir
+  // P6: Le na zona 2
   { title:'P6 — Le fundo centro',
     note:'<strong>Le</strong> fundo centro (pos.2). <strong>C</strong> e <strong>Op</strong> frente dir. Recepção: <strong>Po2</strong> esq · <strong>Lib</strong> centro · <strong>Po1</strong> dir.',
-    ruleZones: [{n:'5',x:8,y:12,hi:false},{n:'6',x:38,y:12,hi:false},{n:'4',x:3,y:38,hi:false},{n:'↓',x:26,y:38,isArrow:true},{n:'1',x:44,y:52,hi:false},{n:'3',x:3,y:58,hi:false},{n:'2',x:26,y:62,hi:true}],
-    pos: c => ({ le:{x:c.XCR,y:c.YF2}, c:{x:c.XR,y:c.YF2}, op:{x:c.XR,y:c.YF1}, po1:{x:c.XCR,y:c.YM}, po2:{x:c.XL,y:c.YM}, lb:{x:c.XC,y:c.YM} })
+    rot: c => ({ le:zonePos(2,c), op:zonePos(5,c), c:zonePos(3,c), po1:zonePos(1,c), po2:zonePos(4,c), lb:zonePos(6,c) }),
+    pos: c => ({ le:{x:0.6541,y:0.6252}, c:{x:0.8797,y:0.6035}, op:{x:0.7464,y:0.5443}, po1:{x:0.7908,y:0.8533}, po2:{x:0.2236,y:0.7815}, lb:{x:0.4933,y:0.8772} })
   },
 ];
 
@@ -752,87 +649,130 @@ function renderRotDiagram(n) {
 // ─── Rotation UI ──────────────────────────────────────────────
 function selectRotation(n) {
   selectedRot = n;
-  document.querySelectorAll('.rot-tab').forEach(t => t.classList.toggle('active', +t.dataset.rot === n));
-  renderMiniCourt(n);
-  const desc = document.getElementById('rot-desc');
-  if (desc) desc.innerHTML = rotDefs[n-1].note;
 }
 
-function renderMiniCourt(n) {
-  const mc = document.getElementById('mini-canvas');
-  const mw=130, mh=100;
-  drawCourt(mc, mw, mh, {pad:8, r:5, lw:1, mini:true});
+let animTimer = null;
 
-  const wrap = document.getElementById('mini-court-wrap');
-  wrap.querySelectorAll('.mini-token').forEach(t=>t.remove());
-
-  const pos = rotDefs[n-1].pos({
-    YF1:(8+(mh-8*2)/2+(mh-(8+(mh-8*2)/2))*0.18)/mh,
-    YF2:(8+(mh-8*2)/2+(mh-(8+(mh-8*2)/2))*0.32)/mh,
-    YM: (8+(mh-8*2)/2+(mh-(8+(mh-8*2)/2))*0.55)/mh,
-    YB1:(8+(mh-8*2)/2+(mh-(8+(mh-8*2)/2))*0.72)/mh,
-    YB2:(8+(mh-8*2)/2+(mh-(8+(mh-8*2)/2))*0.88)/mh,
-    XL: (8+(mw-16)*0.14)/mw,
-    XCL:(8+(mw-16)*0.33)/mw,
-    XC: (8+(mw-16)*0.50)/mw,
-    XCR:(8+(mw-16)*0.67)/mw,
-    XR: (8+(mw-16)*0.86)/mw,
-  });
-
-  const colors = {le:'#d4a017',po1:'#c62828',c:'#37474f',op:'#d4a017',po2:'#c62828',lb:'#2e7d32'};
-  const labels = {le:'Le',po1:'P1',c:'C',op:'Op',po2:'P2',lb:'Lib'};
-
-  ['le','po1','c','op','po2','lb'].forEach(id => {
-    const xy = pos[id];
-    const t = document.createElement('div');
-    t.className = 'mini-token';
-    t.style.background = colors[id];
-    t.style.left = (xy.x * mw) + 'px';
-    t.style.top  = (xy.y * mh) + 'px';
-    t.textContent = labels[id];
-    wrap.appendChild(t);
-  });
-}
-
-function applyRotation() {
+function applyRotation(skipAnim) {
   const n = selectedRot;
   currentRotation = n;
-  const pos = getRotPos(n);
-
-  ['le','po1','c','op','po2','lb'].forEach(id => {
-    const el = document.getElementById('token-' + id);
-    if (!el) return;
-    el.classList.remove('no-anim');
-    el.style.left = (pos[id].x * W) + 'px';
-    el.style.top  = (pos[id].y * H) + 'px';
-  });
+  clearDrawings();
 
   document.getElementById('rot-badge').textContent = 'P' + n;
   document.getElementById('trigger-rot-name').textContent = rotDefs[n-1].title;
   document.querySelectorAll('.trigger-pill').forEach(p => p.classList.toggle('active', +p.dataset.rot === n));
-
-  clearDrawings();
   closeSheet();
+
+  if (skipAnim) {
+    const pos = getRotPos(n);
+    ['le','po1','c','op','po2','lb'].forEach(id => {
+      const el = document.getElementById('token-' + id);
+      if (!el) return;
+      el.classList.remove('no-anim');
+      el.style.left = (pos[id].x * W) + 'px';
+      el.style.top  = (pos[id].y * H) + 'px';
+    });
+    return;
+  }
+
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
+  // ── Phase 1: snap to rotational positions (no transition) ──
+  const c = coords();
+  const rotPos = rotDefs[n-1].rot(c);
+  const leZone = [1,6,5,4,3,2][n-1];
+  const zoneMap = {le:leZone, op:[4,3,2,1,6,5][n-1], c:[3,4,6,5,4,3][n-1], po1:[2,5,4,3,2,1][n-1], po2:[5,2,1,6,5,4][n-1], lb:[2,1,3,2,1,6][n-1]};
+
+  // First: force-disable transitions on all tokens
+  ['le','po1','c','op','po2','lb'].forEach(id => {
+    const el = document.getElementById('token-' + id);
+    if (!el) return;
+    el.classList.add('no-anim');
+  });
+
+  // Wait two frames so the browser commits no-anim before we move
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ['le','po1','c','op','po2','lb'].forEach(id => {
+      const el = document.getElementById('token-' + id);
+      if (!el) return;
+      el.style.left = (rotPos[id].x * W) + 'px';
+      el.style.top  = (rotPos[id].y * H) + 'px';
+
+      let lbl = el.querySelector('.zone-label');
+      if (!lbl) { lbl = document.createElement('div'); lbl.className = 'zone-label'; el.appendChild(lbl); }
+      lbl.textContent = zoneMap[id];
+      lbl.style.opacity = '1';
+    });
+
+    // ── Phase 2: after 900ms, animate to sideout positions ──
+    animTimer = setTimeout(() => {
+      const sidePos = getRotPos(n);
+      ['le','po1','c','op','po2','lb'].forEach(id => {
+        const el = document.getElementById('token-' + id);
+        if (!el) return;
+        el.classList.remove('no-anim');
+        el.style.left = (sidePos[id].x * W) + 'px';
+        el.style.top  = (sidePos[id].y * H) + 'px';
+        const lbl = el.querySelector('.zone-label');
+        if (lbl) lbl.style.opacity = '0';
+      });
+      animTimer = null;
+    }, 900);
+  }));
 }
 
 function quickRot(e, n) {
   e.stopPropagation();
+  selectedRot = n;
   selectRotation(n);
   applyRotation();
 }
 
-// ─── Sheet ────────────────────────────────────────────────────
-function openSheet() {
-  document.getElementById('bottom-sheet').classList.add('open');
-  document.getElementById('sheet-backdrop').classList.add('visible');
-  document.getElementById('trigger-arrow').classList.add('up');
-  selectRotation(selectedRot);
-}
+// ─── Sheet (removido) ─────────────────────────────────────────
+function openSheet() {}
+function closeSheet() {}
 
-function closeSheet() {
-  document.getElementById('bottom-sheet').classList.remove('open');
-  document.getElementById('sheet-backdrop').classList.remove('visible');
-  document.getElementById('trigger-arrow').classList.remove('up');
+function saveAsDefault() {
+  const ids = ['le','po1','c','op','po2','lb'];
+  const n = currentRotation;
+
+  // Read actual pixel positions from DOM and normalize to 0-1
+  const current = {};
+  ids.forEach(id => {
+    const el = document.getElementById('token-' + id);
+    current[id] = {
+      x: parseFloat((parseFloat(el.style.left) / W).toFixed(4)),
+      y: parseFloat((parseFloat(el.style.top)  / H).toFixed(4)),
+    };
+  });
+
+  // New pos function as a string with literal numbers (not c.X* vars)
+  const posStr = `c => ({ le:{x:${current.le.x},y:${current.le.y}}, c:{x:${current.c.x},y:${current.c.y}}, op:{x:${current.op.x},y:${current.op.y}}, po1:{x:${current.po1.x},y:${current.po1.y}}, po2:{x:${current.po2.x},y:${current.po2.y}}, lb:{x:${current.lb.x},y:${current.lb.y}} })`;
+
+  // Get source HTML and replace the nth pos: entry (0-indexed = n-1)
+  const src = document.documentElement.outerHTML;
+  const posRegex = /pos: c => \(\{[^}]+\}\s*\)\s*\}/g;
+  let matchCount = 0;
+  const patched = src.replace(posRegex, (match) => {
+    const result = matchCount === (n - 1)
+      ? match.replace(/pos: c => \(\{[^}]+\}\s*\)/, `pos: ${posStr}`)
+      : match;
+    matchCount++;
+    return result;
+  });
+
+  const blob = new Blob([patched], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prancheta-volei-P${n}-editada.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✅';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '💾'; btn.classList.remove('saved'); }, 2000);
 }
 
 // ─── Drawing ──────────────────────────────────────────────────
@@ -926,6 +866,12 @@ function drawArrow(from,to,color,size) {
   dctx.closePath(); dctx.fill();
 }
 
+function setSpeed(el) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.documentElement.style.setProperty('--token-speed', el.dataset.speed + 's');
+}
+
 function setTool(t) {
   currentTool=t;
   document.querySelectorAll('.tool-btn[id^="btn-"]').forEach(b=>b.classList.remove('active'));
@@ -948,21 +894,13 @@ function clearDrawings(){ strokes=[]; dctx.clearRect(0,0,W,H); }
 
 function resetAll() {
   clearDrawings();
-  const pos = getRotPos(currentRotation);
-  ['le','po1','c','op','po2','lb'].forEach(id => {
-    const el = document.getElementById('token-'+id);
-    if(!el) return;
-    el.classList.remove('no-anim');
-    el.style.left=(pos[id].x*W)+'px';
-    el.style.top=(pos[id].y*H)+'px';
-  });
+  applyRotation(true);
   if(ballToken){ ballToken.style.left=(W/2)+'px'; ballToken.style.top='24px'; }
 }
 
 // ─── Init ─────────────────────────────────────────────────────
 buildCourt();
 createTokens();
-selectRotation(1);
 </script>
 </body>
 </html>
