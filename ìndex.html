@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Prancheta de Vôlei</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px;
+  flex-shrink: 0;
+}
+
+#topbar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cdd9e5;
+  letter-spacing: 0.5px;
+}
+
+#rot-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #e94560;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* ── MAIN AREA ── */
+#main {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+  min-height: 0;
+  padding: 0 8px;
+}
+
+/* ── TOOLBAR ── */
+#toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 14px;
+  padding: 8px 6px;
+  width: 44px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tool-section { display: flex; flex-direction: column; gap: 3px; align-items: center; width: 100%; }
+.tool-divider { width: 80%; height: 1px; background: #21262d; margin: 2px 0; }
+
+.tool-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: #7d8590;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  transition: all 0.13s;
+  padding: 0;
+}
+.tool-btn:hover, .tool-btn:active { background: #21262d; color: #cdd9e5; }
+.tool-btn.active { background: #e94560; border-color: #ff6b88; color: #fff; }
+.tool-btn.danger:active { background: #3d1015; color: #ff4d6d; }
+.tool-label { font-size: 7.5px; color: #555e6d; text-align: center; line-height: 1.1; }
+
+.color-swatch { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.13s, border-color 0.13s; }
+.color-swatch.selected { border-color: #fff; transform: scale(1.15); }
+.color-row { display: flex; gap: 3px; justify-content: center; }
+
+.size-btn { width: 32px; height: 22px; border-radius: 6px; border: 1px solid #21262d; background: transparent; color: #7d8590; cursor: pointer; font-size: 9px; display: flex; align-items: center; justify-content: center; transition: all 0.13s; }
+.size-btn.active { background: #e94560; color: #fff; border-color: #ff6b88; }
+
+/* ── BOARD COLUMN ── */
+#board-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── BOARD WRAP ── */
+#board-wrap { position: relative; flex-shrink: 0; }
+#court-canvas { border-radius: 10px; display: block; }
+#draw-canvas { position: absolute; top:0; left:0; border-radius:10px; pointer-events:none; }
+#interact-canvas { position: absolute; top:0; left:0; border-radius:10px; }
+
+
+
+/* ── PLAYER TOKENS ── */
+.player-token {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  transition: box-shadow 0.13s, left var(--token-speed, 3s) cubic-bezier(.4,0,.2,1), top var(--token-speed, 3s) cubic-bezier(.4,0,.2,1);
+  z-index: 10;
+  border: 3px solid rgba(255,255,255,0.25);
+}
+.player-token.no-anim { transition: box-shadow 0.13s; }
+.player-token:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); }
+.player-token.dragging { z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.6); transition: box-shadow 0.13s; }
+.player-token .abbrev { font-size: 9px; font-weight: 700; color: #fff; letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1; }
+.player-token .role { font-size: 7px; font-weight: 500; color: rgba(255,255,255,0.7); line-height: 1; margin-top: 1px; }
+
+.ball-token {
+  position: absolute;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fffde7, #f9a825, #e65100);
+  border: 2px solid rgba(255,255,255,0.5);
+  cursor: grab;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.ball-token:active { cursor: grabbing; }
+.ball-token.dragging { z-index: 100; }
+
+/* ── BOTTOM TRIGGER BAR ── */
+.zone-label {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transform: translate(-50%, -160%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 20;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* ── BOTTOM TRIGGER BAR ── */
+#rot-trigger {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #161b22;
+  border-top: 1px solid #21262d;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  z-index: 30;
+  transition: background 0.13s;
+}
+#rot-trigger:active { background: #1c2128; }
+
+#trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#trigger-rot-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7d8590;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#trigger-rot-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cdd9e5;
+}
+
+#trigger-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.trigger-pill {
+  width: 28px; height: 24px;
+  border-radius: 6px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #7d8590;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.trigger-pill.active { background: #e94560; border-color: #ff6b88; color: #fff; }
+
+#trigger-arrow {
+  font-size: 18px;
+  color: #7d8590;
+  transition: transform 0.3s;
+}
+#trigger-arrow.up { transform: rotate(180deg); }
+
+#speed-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.speed-btn {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #7d8590;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.speed-btn:active { background: #21262d; }
+.speed-btn.active { background: #21262d; border-color: #e94560; color: #e94560; }
+
+#save-btn {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #7d8590;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.13s;
+  display: flex; align-items: center;
+}
+#save-btn:active { background: #21262d; color: #cdd9e5; }
+#save-btn.saved { border-color: #00e676; color: #00e676; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="topbar-title">🏐 Prancheta de Vôlei</div>
+  <div id="rot-badge">P1</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <div class="tool-section">
+      <button class="tool-btn active" id="btn-pen" onclick="setTool('pen')">✏️</button>
+      <div class="tool-label">Caneta</div>
+      <button class="tool-btn" id="btn-arrow" onclick="setTool('arrow')">↗</button>
+      <div class="tool-label">Seta</div>
+      <button class="tool-btn" id="btn-eraser" onclick="setTool('eraser')">🧹</button>
+      <div class="tool-label">Borracha</div>
+    </div>
+    <div class="tool-divider"></div>
+    <div class="tool-section">
+      <div class="color-row">
+        <div class="color-swatch selected" style="background:#ffffff" data-color="#ffffff" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#e94560" data-color="#e94560" onclick="setColor(this)"></div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#00d4ff" data-color="#00d4ff" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#00e676" data-color="#00e676" onclick="setColor(this)"></div>
+      </div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#ffea00" data-color="#ffea00" onclick="setColor(this)"></div>
+        <div class="color-swatch" style="background:#ff9800" data-color="#ff9800" onclick="setColor(this)"></div>
+      </div>
+    </div>
+    <div class="tool-divider"></div>
+    <div class="tool-section">
+      <button class="size-btn active" data-size="2" onclick="setSize(this)">P</button>
+      <button class="size-btn" data-size="4" onclick="setSize(this)">M</button>
+      <button class="size-btn" data-size="7" onclick="setSize(this)">G</button>
+    </div>
+    <div class="tool-divider"></div>
+    <div class="tool-section">
+      <button class="tool-btn" onclick="undoLast()">↩</button>
+      <div class="tool-label">Undo</div>
+      <button class="tool-btn danger" onclick="clearDrawings()">🗑️</button>
+      <div class="tool-label">Limpar</div>
+      <button class="tool-btn danger" onclick="resetAll()">⚡</button>
+      <div class="tool-label">Reset</div>
+    </div>
+  </div>
+
+  <!-- BOARD COL -->
+  <div id="board-col">
+    <div id="board-wrap">
+      <canvas id="court-canvas"></canvas>
+      <canvas id="draw-canvas"></canvas>
+      <canvas id="interact-canvas"></canvas>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- BOTTOM TRIGGER BAR -->
+<div id="rot-trigger">
+  <div id="trigger-left">
+    <div>
+      <div id="trigger-rot-label">Rotação</div>
+      <div id="trigger-rot-name">P1 — Le fundo direito</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div id="trigger-pills">
+      <div class="trigger-pill active" data-rot="1" onclick="quickRot(event,1)">P1</div>
+      <div class="trigger-pill" data-rot="2" onclick="quickRot(event,2)">P2</div>
+      <div class="trigger-pill" data-rot="3" onclick="quickRot(event,3)">P3</div>
+      <div class="trigger-pill" data-rot="4" onclick="quickRot(event,4)">P4</div>
+      <div class="trigger-pill" data-rot="5" onclick="quickRot(event,5)">P5</div>
+      <div class="trigger-pill" data-rot="6" onclick="quickRot(event,6)">P6</div>
+    </div>
+    <div id="trigger-arrow">⌃</div>
+    <div id="speed-btns">
+      <button class="speed-btn active" data-speed="3" onclick="setSpeed(this)">1×</button>
+      <button class="speed-btn" data-speed="2.5" onclick="setSpeed(this)">2×</button>
+      <button class="speed-btn" data-speed="1.5" onclick="setSpeed(this)">3×</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+// ─── Canvas sizing (responsive) ──────────────────────────────
+const ASPECT = 490 / 320;
+function sizeCanvases() {
+  const toolbar = document.getElementById('toolbar');
+  const main = document.getElementById('main');
+  const topbar = document.getElementById('topbar');
+  const trigger = document.getElementById('rot-trigger');
+
+  const availW = main.clientWidth - toolbar.offsetWidth - 8;
+  const trigH = trigger.offsetHeight || 52;
+  const topH = topbar.offsetHeight || 44;
+  const availH = window.innerHeight - topH - trigH - 16;
+
+  let cw = Math.floor(Math.min(availW, availH / ASPECT));
+  let ch = Math.floor(cw * ASPECT);
+
+  ['court-canvas','draw-canvas','interact-canvas'].forEach(id => {
+    const el = document.getElementById(id);
+    el.width = cw; el.height = ch;
+    el.style.width = cw + 'px'; el.style.height = ch + 'px';
+  });
+
+  W = cw; H = ch;
+  return {cw, ch};
+}
+
+let W, H;
+sizeCanvases();
+
+const courtCanvas    = document.getElementById('court-canvas');
+const drawCanvas     = document.getElementById('draw-canvas');
+const interactCanvas = document.getElementById('interact-canvas');
+const ctx  = courtCanvas.getContext('2d');
+const dctx = drawCanvas.getContext('2d');
+
+// ─── Court Drawing ────────────────────────────────────────────
+function drawCourt(c, w, h, opts={}) {
+  const cx = c.getContext('2d');
+  const pad = opts.pad ?? 14;
+  const cw2 = w - pad*2, ch2 = h - pad*2;
+
+  cx.fillStyle = '#1a6b3a';
+  cx.beginPath(); rr(cx,0,0,w,h,opts.r??10); cx.fill();
+
+  cx.strokeStyle = '#fff'; cx.lineWidth = opts.lw ?? 2;
+  cx.beginPath(); rr(cx,pad,pad,cw2,ch2,3); cx.stroke();
+
+  const netY = pad + ch2/2;
+  cx.lineWidth = (opts.lw??2)+1;
+  cx.beginPath(); cx.moveTo(pad,netY); cx.lineTo(pad+cw2,netY); cx.stroke();
+
+  const atk = ch2/2*0.42;
+  cx.strokeStyle='rgba(255,255,255,0.5)'; cx.lineWidth=opts.lw??1.5;
+  cx.beginPath(); cx.moveTo(pad,netY-atk); cx.lineTo(pad+cw2,netY-atk); cx.stroke();
+  cx.beginPath(); cx.moveTo(pad,netY+atk); cx.lineTo(pad+cw2,netY+atk); cx.stroke();
+
+  cx.strokeStyle='rgba(255,255,255,0.15)'; cx.lineWidth=1; cx.setLineDash([5,5]);
+  cx.beginPath(); cx.moveTo(w/2,pad); cx.lineTo(w/2,pad+ch2); cx.stroke();
+  cx.setLineDash([]);
+
+  if (!opts.mini) {
+    cx.fillStyle='rgba(255,255,255,0.25)'; cx.font=`bold ${Math.max(8,w*0.03)}px system-ui`; cx.textAlign='center';
+    cx.fillText('REDE', w/2, netY-4);
+    cx.fillText('MEU TIME', w/2, netY+ch2/2*0.18);
+    cx.fillText('ADVERSÁRIO', w/2, netY-ch2/2*0.14);
+  }
+}
+
+function rr(cx,x,y,w,h,r) {
+  cx.beginPath();
+  cx.moveTo(x+r,y); cx.lineTo(x+w-r,y); cx.quadraticCurveTo(x+w,y,x+w,y+r);
+  cx.lineTo(x+w,y+h-r); cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  cx.lineTo(x+r,y+h); cx.quadraticCurveTo(x,y+h,x,y+h-r);
+  cx.lineTo(x,y+r); cx.quadraticCurveTo(x,y,x+r,y);
+  cx.closePath();
+}
+
+// ─── Coordinate helpers (normalized 0-1) ─────────────────────
+// Recomputed after resize
+function coords() {
+  const pad=14, cw2=W-pad*2, ch2=H-pad*2;
+  const netY = pad+ch2/2;
+  return {
+    YF1: (netY+(H-netY)*0.18)/H,
+    YF2: (netY+(H-netY)*0.32)/H,
+    YM:  (netY+(H-netY)*0.55)/H,
+    YB1: (netY+(H-netY)*0.72)/H,
+    YB2: (netY+(H-netY)*0.88)/H,
+    XL:  (pad+cw2*0.14)/W,
+    XCL: (pad+cw2*0.33)/W,
+    XC:  (pad+cw2*0.50)/W,
+    XCR: (pad+cw2*0.67)/W,
+    XR:  (pad+cw2*0.86)/W,
+  };
+}
+
+// ─── Rotation data ────────────────────────────────────────────
+// rot: posições rotacionais fixas (regra de rotação, zonas 1-6)
+// pos: posições táticas de sideout (após movimentação)
+// Zonas: 1=fundo-dir, 2=fundo-centro, 3=fundo-esq, 4=frente-esq, 5=frente-centro, 6=frente-dir
+
+function zonePos(zone, c) {
+  const map = {
+    1:{x:c.XR, y:c.YB1}, 2:{x:c.XC, y:c.YB1}, 3:{x:c.XL, y:c.YB1},
+    4:{x:c.XL, y:c.YF2}, 5:{x:c.XC, y:c.YF2}, 6:{x:c.XR, y:c.YF2},
+  };
+  return map[zone];
+}
+
+const rotDefs = [
+  // P1: Le na zona 1
+  { title:'P1 — Le fundo direito',
+    note:'<strong>Le</strong> fundo dir (pos.1). <strong>C</strong> frente centro-esq, <strong>Op</strong> frente esq. Recepção: <strong>Po2</strong> esq · <strong>Lib</strong> centro · <strong>Po1</strong> dir.',
+    rot: c => ({ le:zonePos(1,c), op:zonePos(4,c), c:zonePos(3,c), po1:zonePos(2,c), po2:zonePos(5,c), lb:zonePos(2,c) }),
+    pos: c => ({ le:{x:0.7997,y:0.9078}, c:{x:0.2059,y:0.6078}, op:{x:0.1369,y:0.5444}, po1:{x:0.7541,y:0.7859}, po2:{x:0.2036,y:0.8163}, lb:{x:0.49,y:0.8772} })
+  },
+  // P2: Le na zona 6
+  { title:'P2 — Le frente direito',
+    note:'<strong>Le</strong> frente dir (pos.6). <strong>C</strong> frente esq, <strong>Op</strong> fundo centro. Recepção: <strong>Po1</strong> esq · <strong>Po2</strong> centro · <strong>Lib</strong> dir.',
+    rot: c => ({ le:zonePos(6,c), op:zonePos(3,c), c:zonePos(4,c), po1:zonePos(5,c), po2:zonePos(2,c), lb:zonePos(1,c) }),
+    pos: c => ({ le:{x:0.8664,y:0.5596}, c:{x:0.1169,y:0.6248}, op:{x:0.3133,y:0.9378}, po1:{x:0.2269,y:0.8054}, po2:{x:0.5133,y:0.8576}, lb:{x:0.7875,y:0.8359} })
+  },
+  // P3: Le na zona 5
+  { title:'P3 — Le frente centro',
+    note:'<strong>Le</strong> frente centro (pos.5). <strong>C</strong> frente dir, <strong>Op</strong> fundo centro. Recepção: <strong>Po1</strong> esq · <strong>Lib</strong> centro · <strong>Po2</strong> dir.',
+    rot: c => ({ le:zonePos(5,c), op:zonePos(2,c), c:zonePos(6,c), po1:zonePos(4,c), po2:zonePos(1,c), lb:zonePos(3,c) }),
+    pos: c => ({ le:{x:0.6533,y:0.553}, c:{x:0.9064,y:0.6226}, op:{x:0.6533,y:0.9443}, po1:{x:0.1936,y:0.8402}, po2:{x:0.7675,y:0.812}, lb:{x:0.4867,y:0.8402} })
+  },
+  // P4: Le na zona 4
+  { title:'P4 — Le frente esquerdo',
+    note:'<strong>Le</strong> frente esq (pos.4). <strong>C</strong> linha esq, <strong>Op</strong> fundo dir. Recepção: <strong>Po2</strong> esq · <strong>Po1</strong> centro · <strong>Lib</strong> dir.',
+    rot: c => ({ le:zonePos(4,c), op:zonePos(1,c), c:zonePos(5,c), po1:zonePos(3,c), po2:zonePos(6,c), lb:zonePos(2,c) }),
+    pos: c => ({ le:{x:0.1103,y:0.5465}, c:{x:0.2203,y:0.623}, op:{x:0.8897,y:0.9378}, po1:{x:0.5,y:0.8707}, po2:{x:0.2136,y:0.7946}, lb:{x:0.7708,y:0.8641} })
+  },
+  // P5: Le na zona 3
+  { title:'P5 — Le fundo esquerdo',
+    note:'<strong>Le</strong> fundo esq (pos.3). <strong>C</strong> frente esq, <strong>Op</strong> frente dir. Recepção: <strong>Po2</strong> esq · <strong>Po1</strong> centro · <strong>Lib</strong> dir.',
+    rot: c => ({ le:zonePos(3,c), op:zonePos(6,c), c:zonePos(4,c), po1:zonePos(2,c), po2:zonePos(5,c), lb:zonePos(1,c) }),
+    pos: c => ({ le:{x:0.3359,y:0.6404}, c:{x:0.1169,y:0.5704}, op:{x:0.8831,y:0.5748}, po1:{x:0.51,y:0.8687}, po2:{x:0.2069,y:0.847}, lb:{x:0.7941,y:0.8513} })
+  },
+  // P6: Le na zona 2
+  { title:'P6 — Le fundo centro',
+    note:'<strong>Le</strong> fundo centro (pos.2). <strong>C</strong> e <strong>Op</strong> frente dir. Recepção: <strong>Po2</strong> esq · <strong>Lib</strong> centro · <strong>Po1</strong> dir.',
+    rot: c => ({ le:zonePos(2,c), op:zonePos(5,c), c:zonePos(3,c), po1:zonePos(1,c), po2:zonePos(4,c), lb:zonePos(6,c) }),
+    pos: c => ({ le:{x:0.6541,y:0.6252}, c:{x:0.8797,y:0.6035}, op:{x:0.7464,y:0.5443}, po1:{x:0.7908,y:0.8533}, po2:{x:0.2236,y:0.7815}, lb:{x:0.4933,y:0.8772} })
+  },
+];
+
+// ─── Player defs ─────────────────────────────────────────────
+const playerDefs = [
+  { id:'le',  label:'Le',  role:'Levant.',  color:'#d4a017', border:'#ffe066' },
+  { id:'po1', label:'Po1', role:'Ponteiro', color:'#c62828', border:'#ef9a9a' },
+  { id:'c',   label:'C1',  role:'Central',  color:'#37474f', border:'#90a4ae' },
+  { id:'op',  label:'Op',  role:'Oposto',   color:'#d4a017', border:'#ffe066' },
+  { id:'po2', label:'Po2', role:'Ponteiro', color:'#c62828', border:'#ef9a9a' },
+  { id:'lb',  label:'Lib', role:'Líbero',   color:'#2e7d32', border:'#81c784' },
+];
+
+const tokens = [];
+let ballToken = null;
+let selectedRot = 1;
+let currentRotation = 1;
+
+function buildCourt() {
+  drawCourt(courtCanvas, W, H);
+}
+
+function getRotPos(n) {
+  return rotDefs[n-1].pos(coords());
+}
+
+function createTokens() {
+  const wrap = document.getElementById('board-wrap');
+  const pos = getRotPos(1);
+  playerDefs.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'player-token';
+    el.id = 'token-' + p.id;
+    el.style.background = p.color;
+    el.style.borderColor = p.border;
+    const xy = pos[p.id];
+    el.style.left = (xy.x * W) + 'px';
+    el.style.top  = (xy.y * H) + 'px';
+    el.innerHTML = `<span class="abbrev">${p.label}</span><span class="role">${p.role}</span>`;
+    makeDraggable(el, wrap);
+    wrap.appendChild(el);
+    tokens.push({ el, def: p });
+  });
+
+  const ball = document.createElement('div');
+  ball.className = 'ball-token';
+  ball.id = 'ball-token';
+  ball.style.left = (W/2) + 'px';
+  ball.style.top  = '24px';
+  ball.innerHTML  = '🏐';
+  makeDraggable(ball, wrap);
+  wrap.appendChild(ball);
+  ballToken = ball;
+}
+
+// ─── Drag ─────────────────────────────────────────────────────
+function makeDraggable(el, container) {
+  let isDragging=false, startX, startY, origLeft, origTop;
+  function onDown(e) {
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const clientY=e.touches?e.touches[0].clientY:e.clientY;
+    isDragging=true; el.classList.add('dragging','no-anim');
+    startX=clientX; startY=clientY;
+    origLeft=parseFloat(el.style.left); origTop=parseFloat(el.style.top);
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp);
+    e.stopPropagation();
+  }
+  function onMove(e) {
+    if(!isDragging)return; e.preventDefault();
+    const cx=e.touches?e.touches[0].clientX:e.clientX;
+    const cy=e.touches?e.touches[0].clientY:e.clientY;
+    el.style.left=Math.max(16,Math.min(W-16,origLeft+(cx-startX)))+'px';
+    el.style.top =Math.max(16,Math.min(H-16,origTop +(cy-startY)))+'px';
+  }
+  function onUp() {
+    isDragging=false; el.classList.remove('dragging','no-anim');
+    window.removeEventListener('mousemove',onMove); window.removeEventListener('mouseup',onUp);
+    window.removeEventListener('touchmove',onMove); window.removeEventListener('touchend',onUp);
+  }
+  el.addEventListener('mousedown',onDown);
+  el.addEventListener('touchstart',onDown,{passive:false});
+}
+
+// ─── Rotation diagram SVG ─────────────────────────────────────
+function renderRotDiagram(n) {
+  const def = rotDefs[n-1];
+  // SVG: small court diagram showing zone numbers with Le highlighted
+  // Based on the reference image: top half = adversary, bottom = my team
+  // zones shown as numbers in each quadrant
+  const svg = document.getElementById('rot-diagram-svg');
+
+  // Build a mini rotation order diagram matching the reference image
+  // Shows: top row (adv zones), net line, bottom row (my zones) with arrow
+  const W2=52, H2=80;
+  const netY=32;
+
+  let html = `
+    <rect x="0" y="0" width="${W2}" height="${H2}" rx="6" fill="#1a6b3a"/>
+    <rect x="0" y="0" width="${W2}" height="${netY}" rx="6" fill="#156030" opacity="0.7"/>
+    <line x1="0" y1="${netY}" x2="${W2}" y2="${netY}" stroke="#fff" stroke-width="2"/>
+  `;
+
+  // Zone layout: adv top (6,1 / 5,2 / 4,3), my bottom (Le pos highlighted)
+  // Simplified: just show 2x3 grid of zone numbers
+  const zones = [
+    // top half (adversary) — zones 1,6 front row; 2,5 mid; 3,4 back
+    {z:'6',x:10,y:15},{z:'1',x:42,y:15},
+    // bottom half (my team)
+    {z:'5',x:10,y:netY+14},{z:'2',x:42,y:netY+14},
+    {z:'4',x:10,y:netY+38},{z:'3',x:42,y:netY+38},
+  ];
+
+  // Le's zone per rotation (1-indexed zone number)
+  const leZone = [1,6,5,4,3,2][n-1];
+
+  zones.forEach(({z,x,y}) => {
+    const isLe = z === String(leZone);
+    const fill = isLe ? '#d4a017' : 'rgba(255,255,255,0.12)';
+    const tc = isLe ? '#000' : 'rgba(255,255,255,0.5)';
+    const r = isLe ? 10 : 8;
+    html += `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"/>`;
+    html += `<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" font-weight="700" fill="${tc}" font-family="system-ui">${z}</text>`;
+  });
+
+  // Arrow showing Le's movement direction
+  if (leZone >= 3) {
+    // Le is in back row, draw upward arrow
+    html += `<text x="26" y="${netY+8}" text-anchor="middle" font-size="11" fill="#d4a017" font-family="system-ui">↑</text>`;
+  }
+
+  svg.innerHTML = html;
+  svg.setAttribute('viewBox', `0 0 ${W2} ${H2}`);
+
+  document.getElementById('rot-diagram-title').textContent = def.title;
+  document.getElementById('rot-diagram-note').innerHTML = def.note;
+}
+
+// ─── Rotation UI ──────────────────────────────────────────────
+function selectRotation(n) {
+  selectedRot = n;
+}
+
+let animTimer = null;
+
+// Central zone per rotation (from zoneMap.c): [3,4,6,5,4,3]
+// Front row zones = 4,3,2 (net) → central plays as C1
+// Back row zones = 5,6,1 (back) → central is substituted, shown as C2, Lib comes in
+const centralZonePerRot = [3,4,6,5,4,3];
+
+function updateCentralLabel(n) {
+  const cZone = centralZonePerRot[n-1];
+  const isFront = [4,3,2].includes(cZone); // net zones
+  const cEl = document.getElementById('token-c');
+  const lbEl = document.getElementById('token-lb');
+
+  if (cEl) {
+    const ab = cEl.querySelector('.abbrev');
+    if (isFront) {
+      // Central is on the net → plays as C1
+      if (ab) ab.textContent = 'C1';
+      cEl.style.background = '#37474f';
+      cEl.style.borderColor = '#90a4ae';
+    } else {
+      // Central is in the back → substituted by Lib, shown as C2
+      if (ab) ab.textContent = 'C2';
+      cEl.style.background = '#455a64';
+      cEl.style.borderColor = '#b0bec5';
+    }
+  }
+}
+
+function applyRotation(skipAnim) {
+  const n = selectedRot;
+  currentRotation = n;
+  clearDrawings();
+
+  document.getElementById('rot-badge').textContent = 'P' + n;
+  document.getElementById('trigger-rot-name').textContent = rotDefs[n-1].title;
+  document.querySelectorAll('.trigger-pill').forEach(p => p.classList.toggle('active', +p.dataset.rot === n));
+  closeSheet();
+
+  if (skipAnim) {
+    const pos = getRotPos(n);
+    ['le','po1','c','op','po2','lb'].forEach(id => {
+      const el = document.getElementById('token-' + id);
+      if (!el) return;
+      el.classList.remove('no-anim');
+      el.style.left = (pos[id].x * W) + 'px';
+      el.style.top  = (pos[id].y * H) + 'px';
+    });
+    updateCentralLabel(n);
+    return;
+  }
+
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
+  // ── Phase 1: snap to rotational positions (no transition) ──
+  const c = coords();
+  const rotPos = rotDefs[n-1].rot(c);
+
+  // Derive each player's zone NUMBER for the label.
+  // Visual court layout (labels): front row = 4(esq) 3(centro) 2(dir); back row = 5(esq) 6(centro) 1(dir)
+  // We map by matching the X column and Y row of each token, independent of zonePos numbering.
+  const zoneLabelFor = (x, y) => {
+    const isFront = Math.abs(y - c.YF2) < Math.abs(y - c.YB1); // closer to front row?
+    // determine column by nearest X
+    const cols = [['L', c.XL], ['C', c.XC], ['R', c.XR]];
+    let col = cols.reduce((best, cur) => Math.abs(x - cur[1]) < Math.abs(x - best[1]) ? cur : best)[0];
+    const front = { L: 4, C: 3, R: 2 };
+    const back  = { L: 5, C: 6, R: 1 };
+    return isFront ? front[col] : back[col];
+  };
+
+  const zoneMap = {};
+  ['le','po1','c','op','po2','lb'].forEach(id => {
+    zoneMap[id] = zoneLabelFor(rotPos[id].x, rotPos[id].y);
+  });
+
+  // First: force-disable transitions on all tokens
+  ['le','po1','c','op','po2','lb'].forEach(id => {
+    const el = document.getElementById('token-' + id);
+    if (!el) return;
+    el.classList.add('no-anim');
+  });
+
+  // Wait two frames so the browser commits no-anim before we move
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ['le','po1','c','op','po2','lb'].forEach(id => {
+      const el = document.getElementById('token-' + id);
+      if (!el) return;
+      el.style.left = (rotPos[id].x * W) + 'px';
+      el.style.top  = (rotPos[id].y * H) + 'px';
+
+      let lbl = el.querySelector('.zone-label');
+      if (!lbl) { lbl = document.createElement('div'); lbl.className = 'zone-label'; el.appendChild(lbl); }
+      lbl.textContent = zoneMap[id];
+      lbl.style.opacity = '1';
+    });
+
+    // ── Phase 2: after 900ms, animate to sideout positions ──
+    animTimer = setTimeout(() => {
+      const sidePos = getRotPos(n);
+      ['le','po1','c','op','po2','lb'].forEach(id => {
+        const el = document.getElementById('token-' + id);
+        if (!el) return;
+        el.classList.remove('no-anim');
+        el.style.left = (sidePos[id].x * W) + 'px';
+        el.style.top  = (sidePos[id].y * H) + 'px';
+        const lbl = el.querySelector('.zone-label');
+        if (lbl) lbl.style.opacity = '0';
+      });
+      updateCentralLabel(n);
+      animTimer = null;
+    }, 900);
+  }));
+}
+
+function quickRot(e, n) {
+  e.stopPropagation();
+  selectedRot = n;
+  selectRotation(n);
+  applyRotation();
+}
+
+// ─── Sheet (removido) ─────────────────────────────────────────
+function openSheet() {}
+function closeSheet() {}
+
+function saveAsDefault() {
+  const ids = ['le','po1','c','op','po2','lb'];
+  const n = currentRotation;
+
+  // Read actual pixel positions from DOM and normalize to 0-1
+  const current = {};
+  ids.forEach(id => {
+    const el = document.getElementById('token-' + id);
+    current[id] = {
+      x: parseFloat((parseFloat(el.style.left) / W).toFixed(4)),
+      y: parseFloat((parseFloat(el.style.top)  / H).toFixed(4)),
+    };
+  });
+
+  // New pos function as a string with literal numbers (not c.X* vars)
+  const posStr = `c => ({ le:{x:${current.le.x},y:${current.le.y}}, c:{x:${current.c.x},y:${current.c.y}}, op:{x:${current.op.x},y:${current.op.y}}, po1:{x:${current.po1.x},y:${current.po1.y}}, po2:{x:${current.po2.x},y:${current.po2.y}}, lb:{x:${current.lb.x},y:${current.lb.y}} })`;
+
+  // Get source HTML and replace the nth pos: entry (0-indexed = n-1)
+  const src = document.documentElement.outerHTML;
+  const posRegex = /pos: c => \(\{[^}]+\}\s*\)\s*\}/g;
+  let matchCount = 0;
+  const patched = src.replace(posRegex, (match) => {
+    const result = matchCount === (n - 1)
+      ? match.replace(/pos: c => \(\{[^}]+\}\s*\)/, `pos: ${posStr}`)
+      : match;
+    matchCount++;
+    return result;
+  });
+
+  const blob = new Blob([patched], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prancheta-volei-P${n}-editada.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✅';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '💾'; btn.classList.remove('saved'); }, 2000);
+}
+
+// ─── Drawing ──────────────────────────────────────────────────
+let currentTool='pen', currentColor='#ffffff', currentSize=2;
+let isDrawing=false, lastX=0, lastY=0;
+let strokes=[], currentStroke=null, arrowStart=null;
+interactCanvas.style.cursor='crosshair';
+
+function getPos(e) {
+  const r=interactCanvas.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  return {x:cx-r.left, y:cy-r.top};
+}
+
+interactCanvas.addEventListener('mousedown',startDraw);
+interactCanvas.addEventListener('mousemove',draw);
+interactCanvas.addEventListener('mouseup',endDraw);
+interactCanvas.addEventListener('mouseleave',endDraw);
+interactCanvas.addEventListener('touchstart',startDraw,{passive:false});
+interactCanvas.addEventListener('touchmove',draw,{passive:false});
+interactCanvas.addEventListener('touchend',endDraw);
+
+function startDraw(e) {
+  e.preventDefault();
+  const pos=getPos(e); isDrawing=true;
+  if(currentTool==='pen'){
+    currentStroke={type:'pen',points:[pos],color:currentColor,size:currentSize};
+    dctx.beginPath(); dctx.moveTo(pos.x,pos.y);
+  } else if(currentTool==='arrow'){ arrowStart=pos; }
+  else if(currentTool==='eraser'){ erase(pos); }
+  lastX=pos.x; lastY=pos.y;
+}
+
+function draw(e) {
+  if(!isDrawing)return; e.preventDefault();
+  const pos=getPos(e);
+  if(currentTool==='pen'){
+    dctx.lineTo(pos.x,pos.y);
+    dctx.strokeStyle=currentColor; dctx.lineWidth=currentSize;
+    dctx.lineCap='round'; dctx.lineJoin='round'; dctx.stroke();
+    currentStroke.points.push(pos);
+  } else if(currentTool==='arrow'&&arrowStart){
+    redrawAll(); drawArrow(arrowStart,pos,currentColor+'aa',currentSize);
+  } else if(currentTool==='eraser'){ erase(pos); }
+  lastX=pos.x; lastY=pos.y;
+}
+
+function endDraw(e) {
+  if(!isDrawing)return; isDrawing=false;
+  if(currentTool==='pen'&&currentStroke){ strokes.push(currentStroke); currentStroke=null; }
+  else if(currentTool==='arrow'&&arrowStart){
+    const r=interactCanvas.getBoundingClientRect();
+    let ex,ey;
+    if(e.changedTouches){ex=e.changedTouches[0].clientX-r.left;ey=e.changedTouches[0].clientY-r.top;}
+    else{ex=(e.clientX||lastX)-r.left;ey=(e.clientY||lastY)-r.top;}
+    strokes.push({type:'arrow',from:arrowStart,to:{x:ex,y:ey},color:currentColor,size:currentSize});
+    arrowStart=null; redrawAll();
+  }
+}
+
+function erase(pos) {
+  const t=18;
+  strokes=strokes.filter(s=>{
+    if(s.type==='pen') return !s.points.some(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<t);
+    const mx=(s.from.x+s.to.x)/2,my=(s.from.y+s.to.y)/2;
+    return Math.hypot(mx-pos.x,my-pos.y)>t;
+  });
+  redrawAll();
+}
+
+function redrawAll() {
+  dctx.clearRect(0,0,W,H);
+  strokes.forEach(s=>{ if(s.type==='pen') drawPen(s); else drawArrow(s.from,s.to,s.color,s.size); });
+}
+
+function drawPen(s) {
+  if(s.points.length<2)return;
+  dctx.beginPath(); dctx.moveTo(s.points[0].x,s.points[0].y);
+  for(let i=1;i<s.points.length;i++) dctx.lineTo(s.points[i].x,s.points[i].y);
+  dctx.strokeStyle=s.color; dctx.lineWidth=s.size; dctx.lineCap='round'; dctx.lineJoin='round'; dctx.stroke();
+}
+
+function drawArrow(from,to,color,size) {
+  const ang=Math.atan2(to.y-from.y,to.x-from.x), hl=14+size*2;
+  dctx.strokeStyle=color; dctx.fillStyle=color; dctx.lineWidth=size; dctx.lineCap='round';
+  dctx.beginPath(); dctx.moveTo(from.x,from.y); dctx.lineTo(to.x,to.y); dctx.stroke();
+  dctx.beginPath(); dctx.moveTo(to.x,to.y);
+  dctx.lineTo(to.x-hl*Math.cos(ang-0.45),to.y-hl*Math.sin(ang-0.45));
+  dctx.lineTo(to.x-hl*Math.cos(ang+0.45),to.y-hl*Math.sin(ang+0.45));
+  dctx.closePath(); dctx.fill();
+}
+
+function setSpeed(el) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.documentElement.style.setProperty('--token-speed', el.dataset.speed + 's');
+}
+
+function setTool(t) {
+  currentTool=t;
+  document.querySelectorAll('.tool-btn[id^="btn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('btn-'+t); if(btn) btn.classList.add('active');
+  interactCanvas.style.cursor=t==='eraser'?'cell':'crosshair';
+}
+
+function setColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected'); currentColor=el.dataset.color;
+}
+
+function setSize(el) {
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); currentSize=parseInt(el.dataset.size);
+}
+
+function undoLast(){ strokes.pop(); redrawAll(); }
+function clearDrawings(){ strokes=[]; dctx.clearRect(0,0,W,H); }
+
+function resetAll() {
+  clearDrawings();
+  applyRotation(true);
+  if(ballToken){ ballToken.style.left=(W/2)+'px'; ballToken.style.top='24px'; }
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+buildCourt();
+createTokens();
+updateCentralLabel(1);
+</script>
+</body>
+</html>
