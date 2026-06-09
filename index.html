@@ -513,7 +513,7 @@ const rotDefs = [
 const playerDefs = [
   { id:'le',  label:'Le',  role:'Levant.',  color:'#d4a017', border:'#ffe066' },
   { id:'po1', label:'Po1', role:'Ponteiro', color:'#c62828', border:'#ef9a9a' },
-  { id:'c',   label:'C',   role:'Central',  color:'#37474f', border:'#90a4ae' },
+  { id:'c',   label:'C1',  role:'Central',  color:'#37474f', border:'#90a4ae' },
   { id:'op',  label:'Op',  role:'Oposto',   color:'#d4a017', border:'#ffe066' },
   { id:'po2', label:'Po2', role:'Ponteiro', color:'#c62828', border:'#ef9a9a' },
   { id:'lb',  label:'Lib', role:'Líbero',   color:'#2e7d32', border:'#81c784' },
@@ -653,6 +653,33 @@ function selectRotation(n) {
 
 let animTimer = null;
 
+// Central zone per rotation (from zoneMap.c): [3,4,6,5,4,3]
+// Front row zones = 4,3,2 (net) → central plays as C1
+// Back row zones = 5,6,1 (back) → central is substituted, shown as C2, Lib comes in
+const centralZonePerRot = [3,4,6,5,4,3];
+
+function updateCentralLabel(n) {
+  const cZone = centralZonePerRot[n-1];
+  const isFront = [4,3,2].includes(cZone); // net zones
+  const cEl = document.getElementById('token-c');
+  const lbEl = document.getElementById('token-lb');
+
+  if (cEl) {
+    const ab = cEl.querySelector('.abbrev');
+    if (isFront) {
+      // Central is on the net → plays as C1
+      if (ab) ab.textContent = 'C1';
+      cEl.style.background = '#37474f';
+      cEl.style.borderColor = '#90a4ae';
+    } else {
+      // Central is in the back → substituted by Lib, shown as C2
+      if (ab) ab.textContent = 'C2';
+      cEl.style.background = '#455a64';
+      cEl.style.borderColor = '#b0bec5';
+    }
+  }
+}
+
 function applyRotation(skipAnim) {
   const n = selectedRot;
   currentRotation = n;
@@ -672,6 +699,7 @@ function applyRotation(skipAnim) {
       el.style.left = (pos[id].x * W) + 'px';
       el.style.top  = (pos[id].y * H) + 'px';
     });
+    updateCentralLabel(n);
     return;
   }
 
@@ -680,8 +708,24 @@ function applyRotation(skipAnim) {
   // ── Phase 1: snap to rotational positions (no transition) ──
   const c = coords();
   const rotPos = rotDefs[n-1].rot(c);
-  const leZone = [1,6,5,4,3,2][n-1];
-  const zoneMap = {le:leZone, op:[4,3,2,1,6,5][n-1], c:[3,4,6,5,4,3][n-1], po1:[2,5,4,3,2,1][n-1], po2:[5,2,1,6,5,4][n-1], lb:[2,1,3,2,1,6][n-1]};
+
+  // Derive each player's zone NUMBER for the label.
+  // Visual court layout (labels): front row = 4(esq) 3(centro) 2(dir); back row = 5(esq) 6(centro) 1(dir)
+  // We map by matching the X column and Y row of each token, independent of zonePos numbering.
+  const zoneLabelFor = (x, y) => {
+    const isFront = Math.abs(y - c.YF2) < Math.abs(y - c.YB1); // closer to front row?
+    // determine column by nearest X
+    const cols = [['L', c.XL], ['C', c.XC], ['R', c.XR]];
+    let col = cols.reduce((best, cur) => Math.abs(x - cur[1]) < Math.abs(x - best[1]) ? cur : best)[0];
+    const front = { L: 4, C: 3, R: 2 };
+    const back  = { L: 5, C: 6, R: 1 };
+    return isFront ? front[col] : back[col];
+  };
+
+  const zoneMap = {};
+  ['le','po1','c','op','po2','lb'].forEach(id => {
+    zoneMap[id] = zoneLabelFor(rotPos[id].x, rotPos[id].y);
+  });
 
   // First: force-disable transitions on all tokens
   ['le','po1','c','op','po2','lb'].forEach(id => {
@@ -716,6 +760,7 @@ function applyRotation(skipAnim) {
         const lbl = el.querySelector('.zone-label');
         if (lbl) lbl.style.opacity = '0';
       });
+      updateCentralLabel(n);
       animTimer = null;
     }, 900);
   }));
@@ -901,6 +946,7 @@ function resetAll() {
 // ─── Init ─────────────────────────────────────────────────────
 buildCourt();
 createTokens();
+updateCentralLabel(1);
 </script>
 </body>
 </html>
